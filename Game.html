@@ -24,6 +24,8 @@
 		var lastpole;
 		var ball;
 		var check;
+		var red;
+		var green;
 		var HERO = function(){
 			this.width = 1;
 			this.height = 10;
@@ -31,11 +33,12 @@
 			this.y = RESOLUTION / 2 - this.height/2;
 			this.vx = 0;
 			this.vy = 0;
+			this.color = "#000";
 			this.update = function()
 			{
 				for (var i = 0; i<this.height; i++)
 				{
-					pole[this.y + i][this.x] = "#000";
+					pole[this.y + i][this.x] = this.color;
 				}
 
 			};
@@ -75,6 +78,9 @@
 			this.y = this._y;
 			this.vx = 0.25;
 			this.vy = 0.25;
+			this.dx = 0;
+			this.dy = 0;
+
 			this.clear = function()
 			{
 				pole[this._y][this._x] = BGCOLOR;
@@ -82,8 +88,18 @@
 			this.update = function()
 			{
 				this.clear();
-				this.x += this.vx;
-				this.y += this.vy;
+				this.dx += Math.abs(this.vx);
+				this.dy += Math.abs(this.vy);
+				if (Math.abs(this.dx) >=1)
+				{
+					this.x+=(this.vx>0) ? 1 : -1;
+					this.dx -= 1;
+				}
+				if (Math.abs(this.dy) >=1)
+				{
+					this.y+=(this.vy>0) ? 1 : -1;
+					this.dy -= 1;
+				}
 				if (this.x > RESOLUTION-1)
 				{
 					this.x = RESOLUTION-1;
@@ -106,7 +122,32 @@
 				this._y = Math.floor(this.y);
 				if (pole[this._y][this._x]!=BGCOLOR)
 				{
-					this.vx*=-1;
+					var color = pole[this._y][this._x];
+					if (color == hero.color)
+					{
+						var dy = this._y - hero.y;
+						var v = Math.sqrt(this.vx*this.vx+this.vy*this.vy);
+						if (dy == 0)
+							dy = 1;
+						if (dy == hero.height)
+							dy = hero.height -1;
+
+						if (this.vx<0)
+						{
+
+							this.vx = Math.sin(dy*Math.PI/hero.height)*v;
+							this.vy = -Math.cos(dy*Math.PI/hero.height)*v;
+						} else
+						{
+							this.vx = -Math.sin(dy*Math.PI/hero.height)*v;
+							this.vy = -Math.cos(dy*Math.PI/hero.height)*v;
+						}
+						console.log("vx: "+this.vx + " vy: "+ this.vy);
+						
+					} else
+					{
+						this.vx*=-1;
+					}
 					pole[this._y][this._x] = BGCOLOR;
 				}
 				pole[this._y][this._x] = "#00f";
@@ -114,8 +155,8 @@
 		};
 		var Check = function()
 		{
-			var red = 0;
-			var green = 0;
+			red = 0;
+			green = 0;
 			for (i = 0; i< RESOLUTION; i++)
 			{
 				for (j=0; j<RESOLUTION;j++)
@@ -130,7 +171,6 @@
 					}
 				}
 			}
-			console.log(red-green);
 			if (red==0)
 			{
 				alert("You win");
@@ -163,7 +203,9 @@
 		};
 		var Draw = function()
 		{
-
+			ctx.fillStyle = "#000";
+			ctx.clearRect(0,0,72,10);
+			ctx.fillText("Score: "+(green-red),2,10);
 			DrawPole();
 			for (var i = 0; i<RESOLUTION;i++)
 			{
@@ -172,9 +214,20 @@
 					lastpole[i][j] = pole[i][j];
 				}
 			}
+
+
+
 		};
 		var Update = function()
 		{
+			// hero control
+			if (upKey) {
+				hero.moveUp();
+			} else
+			if (downKey) {
+				hero.moveDown();
+			}
+			// update
 			hero.update();
 			ball.update();
 			if (Check()) 
@@ -187,16 +240,24 @@
 			Update();
 			Draw();
 		};
+		var downKey = false;
+		var upKey = false;
 		var keydown = function(e)
 		{
-
-			if (e.keyCode == 38)
-			{
-				hero.moveUp();
-			} else
-			if (e.keyCode == 40)
-			{
-				hero.moveDown();
+			if (e.keyCode == 38) {
+				upKey = true;
+			}
+			if (e.keyCode == 40) {
+				downKey = true;
+			}
+		}
+		var keyup = function(e)
+		{
+			if (e.keyCode == 38) {
+				upKey = false;
+			}
+			if (e.keyCode == 40) {
+				downKey = false;
 			}
 		}
 		var Initialize = function()
@@ -232,6 +293,7 @@
 			}
 
 			window.addEventListener("keydown", keydown);
+			window.addEventListener("keyup", keyup);
 		};
 
 	</script>
